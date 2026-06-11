@@ -1,0 +1,126 @@
+syntax = "proto3";
+
+package proto.common;
+
+option go_package = "card-game-client/proto/common";
+
+// ==================== 消息头定义 ====================
+
+/**
+ * 消息头
+ * 每条消息的固定头部，用于路由和追踪
+ */
+message MsgHeader {
+  string msgId = 1;        // 消息ID
+  int32 version = 2;      // 协议版本号 (当前为1)
+  int64 timestamp = 3;    // 客户端发送时间戳(毫秒)
+  string seqId = 4;        // 请求序列号(用于请求-响应匹配)
+  string token = 5;       // 认证Token(登录后可空)
+  int32 compress = 6;     // 压缩标志 (0=不压缩, 1=gzip)
+}
+
+// ==================== 通用响应码定义 ====================
+
+/**
+ * 响应码枚举
+ */
+enum Code {
+  SUCCESS = 0;                    // 成功
+  INVALID_PARAM = 100;            // 参数错误
+  TOKEN_MISSING = 200;            // 缺少Token
+  TOKEN_INVALID = 201;            // Token无效
+  TOKEN_EXPIRED = 202;            // Token已过期
+  USER_NOT_FOUND = 300;           // 用户不存在
+  USER_EXISTS = 301;              // 用户已存在
+  WRONG_PASSWORD = 302;           // 密码错误
+  USER_BANNED = 303;              // 用户被封禁
+  ALREADY_ONLINE = 304;           // 用户已在线
+  SESSION_NOT_FOUND = 400;        // 会话不存在
+  SERVER_BUSY = 900;              // 服务器繁忙
+  INTERNAL_ERROR = 999;           // 服务器内部错误
+}
+
+enum MessageType{
+  // 未知类型
+  UNKNOWN = 0;
+
+  //心跳
+  HEARTBEAT = 1;
+
+  // ========== Author服务 (10xx) ==========
+  AUTH_REGISTER_REQUEST = 1001;      // 注册请求
+  AUTH_REGISTER_RESPONSE = 1002;     // 注册响应
+  AUTH_LOGIN_REQUEST = 1003;         // 登录请求
+  AUTH_LOGIN_RESPONSE = 1004;        // 登录响应
+  AUTH_VERIFY_TOKEN_REQUEST = 1005;  // Token校验请求
+  AUTH_VERIFY_TOKEN_RESPONSE = 1006; // Token校验响应
+  AUTH_REFRESH_TOKEN_REQUEST = 1007; // 刷新Token请求
+  AUTH_REFRESH_TOKEN_RESPONSE = 1008;// 刷新Token响应
+  AUTH_LOGOUT_REQUEST = 1009;        // 登出请求
+  AUTH_KICK_REQUEST = 1010;          // 踢下线请求
+
+  // ========== Agent 服务 (20xx) ==========
+  AGENT_PLAYER_ONLINE_REQUEST = 2001;    // 玩家上线通知
+  AGENT_PLAYER_OFFLINE_REQUEST = 2002;   // 玩家下线通知
+  AGENT_FORWARD_MESSAGE_REQUEST = 2003;  // 转发消息请求
+  AGENT_FORWARD_MESSAGE_RESPONSE = 2004; // 转发消息响应
+  AGENT_GET_PLAYER_STATUS_REQUEST = 2005;    // 查询玩家状态请求
+  AGENT_GET_PLAYER_STATUS_RESPONSE = 2006;   // 查询玩家状态响应
+  AGENT_BATCH_GET_PLAYER_STATUS_REQUEST = 2007;  // 批量查询玩家状态
+  AGENT_BATCH_GET_PLAYER_STATUS_RESPONSE = 2008; // 批量查询响应
+  AGENT_BROADCAST_REQUEST = 2009;        // 广播消息
+  AGENT_KICK_PLAYER_REQUEST = 2010;      // 踢玩家下线
+
+  // ========== Gateway 服务 (30xx) ==========
+  GATEWAY_CLIENT_CONNECT_REQUEST = 3001;     // 客户端连接
+  GATEWAY_CLIENT_CONNECT_RESPONSE = 3002;    // 客户端连接响应
+  GATEWAY_CLIENT_DISCONNECT_REQUEST = 3003;  // 客户端断开
+  GATEWAY_LOGIN_REQUEST = 3004;              // 网关登录请求
+  GATEWAY_LOGIN_RESPONSE = 3005;             // 网关登录响应
+  GATEWAY_HEARTBEAT_REQUEST = 3006;          // 心跳请求
+  GATEWAY_HEARTBEAT_RESPONSE = 3007;         // 心跳响应
+  GATEWAY_RECONNECT_REQUEST = 3008;          // 重连请求
+  GATEWAY_RECONNECT_RESPONSE = 3009;         // 重连响应
+  GATEWAY_BUSINESS_REQUEST = 3010;           // 业务请求
+  GATEWAY_BUSINESS_RESPONSE = 3011;          // 业务响应
+}
+
+/**
+ * 通用响应体
+ */
+message CommonResponse {
+  Code code = 1;          // 响应码
+  string message = 2;     // 响应消息
+  int64 timestamp = 3;    // 服务端时间戳
+}
+
+/**
+ * 玩家基础信息
+ */
+message PlayerBaseInfo {
+  string playerId = 1;     // 玩家ID
+  string username = 2;    // 用户名
+  string nickname = 3;    // 昵称
+  int32 level = 4;        // 等级
+  string avatar = 5;      // 头像URL
+}
+
+// 玩家会话信息
+message PlayerSession {
+  string playerId = 1;
+  string gatewayId = 2;
+  string sessionId = 3;
+  int64 loginTime = 4;
+  int64 lastHeartbeat = 5;
+  int32 status = 6;   // 0-在线, 1-战斗中, 2-匹配中
+}
+
+/**
+ * 统一游戏消息包装器
+ * 所有服务间通信都使用此消息格式
+ */
+message GameMessage {
+  MsgHeader header = 1;           // 消息头
+  bytes body = 2;                 // 消息体（具体业务数据的Protobuf序列化）
+  MessageType messageType = 3;    // 消息类型标识（用于反序列化时识别具体类型）
+}

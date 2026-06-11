@@ -1,0 +1,110 @@
+syntax = "proto3";
+
+package proto.author;
+
+import "proto/common/common.proto";
+
+option go_package = "card-game-client/proto/author";
+
+// ==================== Login 服务定义 ====================
+
+service LoginService {
+  // 账号注册
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+
+  // 登录认证
+  rpc Authenticate(AuthRequest) returns (AuthResponse);
+
+  // Token 校验
+  rpc VerifyToken(VerifyTokenRequest) returns (VerifyTokenResponse);
+
+  // 刷新 Token
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
+
+  // 登出
+  rpc Logout(LogoutRequest) returns (common.CommonResponse);
+
+  // 踢下线（由其他服务调用）
+  rpc KickPlayer(KickPlayerRequest) returns (common.CommonResponse);
+}
+
+// ==================== 请求/响应消息定义 ====================
+
+// 注册请求
+message RegisterRequest {
+  string username = 1;
+  string password = 2;
+  string nickname = 3;
+  int32 clientType = 4;   // 1-iOS, 2-Android, 3-PC
+}
+
+// 注册响应
+message RegisterResponse {
+  common.Code code = 1;
+  string message = 2;
+  string playerId = 3;
+  int64 createTime = 4;
+}
+
+// 登录请求
+message AuthRequest {
+  string username = 1;
+  string password = 2;
+  int32 clientType = 3;       // 客户端类型
+  string clientVersion = 4;   // 客户端版本
+  string gatewayId = 5;       // 连接的网关ID
+  string deviceId = 6;        // 设备ID
+}
+
+// 登录响应
+message AuthResponse {
+  common.Code code = 1;
+  string message = 2;
+  string token = 3;                       // JWT Token
+  int64 expireAt = 4;                     // 过期时间戳
+  common.PlayerBaseInfo playerInfo = 5;
+  int64 serverTime = 6;                   // 服务器时间
+  bool isReconnect = 7;                   // 是否为重连
+}
+
+// Token 校验请求
+message VerifyTokenRequest {
+  string token = 1;
+  string playerId = 2;         // 可选，用于校验 Token 是否属于该玩家
+}
+
+// Token 校验响应
+message VerifyTokenResponse {
+  common.Code code = 1;
+  string message = 2;
+  string playerId = 3;
+  string username = 4;
+  int64 expireAt = 5;
+}
+
+// Token 刷新请求
+message RefreshTokenRequest {
+  string token = 1;
+}
+
+// Token 刷新响应
+message RefreshTokenResponse {
+  common.Code code = 1;
+  string message = 2;
+  string newToken = 3;
+  int64 expireAt = 4;
+}
+
+// 登出请求
+message LogoutRequest {
+  string playerId = 1;
+  string token = 2;
+  string reason = 3;          // logout-主动, kick-被踢, timeout-超时
+}
+
+// 踢下线请求
+message KickPlayerRequest {
+  string playerId = 1;
+  string kickReason = 2;      // 踢下线原因
+  int32 kickCode = 3;         // 踢下线错误码
+}

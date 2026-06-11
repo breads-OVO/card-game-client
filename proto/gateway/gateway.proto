@@ -1,0 +1,134 @@
+syntax = "proto3";
+
+package proto.gateway;
+
+import "proto/common/common.proto";
+
+option go_package = "card-game-client/proto/gateway";
+
+// ==================== 认证消息 (1000-1999) ====================
+
+/**
+ * 登录请求 (msgId = 1001)
+ */
+message LoginReq {
+  string username = 1;        // 用户名
+  string password = 2;        // 密码
+  int32 clientType = 3;       // 客户端类型: 1-iOS, 2-Android, 3-PC, 4-Web
+  string deviceId = 4;        // 设备唯一标识
+  string clientVersion = 5;   // 客户端版本号
+}
+
+/**
+ * 登录响应 (msgId = 1002)
+ */
+message LoginRsp {
+  common.Code code = 1;           // 响应码
+  string message = 2;             // 响应消息
+  string token = 3;               // 认证Token
+  int64 expireAt = 4;             // Token过期时间戳
+  common.PlayerBaseInfo playerInfo = 5;  // 玩家信息
+  int64 serverTime = 6;           // 服务器当前时间
+}
+
+/**
+ * 登出请求 (msgId = 1003)
+ */
+message LogoutReq {
+  string reason = 1;      // 登出原因: logout-主动登出, kick-被踢下线
+}
+
+/**
+ * 登出响应 (msgId = 1004)
+ */
+message LogoutRsp {
+  common.Code code = 1;
+  string message = 2;
+}
+
+/**
+ * 心跳请求 (msgId = 1005)
+ */
+message HeartbeatReq {
+  int64 clientTime = 1;       // 客户端当前时间戳
+  int32 pingSeq = 2;          // 心跳序列号
+}
+
+/**
+ * 心跳响应 (msgId = 1006)
+ */
+message HeartbeatRsp {
+  int64 clientTime = 1;       // 客户端发送的时间戳(回传)
+  int64 serverTime = 2;       // 服务端当前时间戳
+  int32 pingSeq = 3;          // 心跳序列号(回传)
+}
+
+/**
+ * 重连请求 (msgId = 1007)
+ */
+message ReconnectReq {
+  string token = 1;           // 之前的Token
+  int64 playerId = 2;         // 玩家ID
+  string deviceId = 3;        // 设备ID
+}
+
+/**
+ * 重连响应 (msgId = 1008)
+ */
+message ReconnectRsp {
+  common.Code code = 1;
+  string message = 2;
+  common.PlayerBaseInfo playerInfo = 3;
+  int64 serverTime = 4;
+}
+
+/**
+ * 踢下线通知 (msgId = 1009)
+ * 服务器主动推送
+ */
+message KickNotify {
+  int32 reason = 1;           // 踢下线原因码
+  string message = 2;         // 提示信息
+  int64 kickTime = 3;         // 踢下线时间
+}
+
+// ==================== 业务消息 (2000-9999) ====================
+
+/**
+ * 通用业务请求 (msgId = 2001)
+ * 用于转发具体的业务消息，body 是具体业务消息的二进制数据
+ */
+message BusinessReq {
+  int32 subMsgId = 1;         // 子消息ID (具体业务类型)
+  bytes body = 2;             // 业务消息体(Protobuf序列化)
+}
+
+/**
+ * 通用业务响应 (msgId = 2002)
+ */
+message BusinessRsp {
+  int32 subMsgId = 1;         // 子消息ID (对应请求)
+  common.Code code = 2;       // 业务处理结果码
+  string message = 3;         // 结果描述
+  bytes body = 4;             // 响应数据
+}
+
+/**
+ * 玩家信息请求 (msgId = 2101)
+ */
+message PlayerInfoReq {
+  int64 playerId = 1;         // 要查询的玩家ID (0表示查询自己)
+}
+
+/**
+ * 玩家信息响应 (msgId = 2102)
+ */
+message PlayerInfoRsp {
+  common.Code code = 1;
+  string message = 2;
+  common.PlayerBaseInfo playerInfo = 3;
+  int64 exp = 4;              // 经验值
+  int64 nextExp = 5;          // 升级所需经验
+  int32 vipLevel = 6;         // VIP等级
+  int64 lastOnlineTime = 7;   // 最后在线时间
+}

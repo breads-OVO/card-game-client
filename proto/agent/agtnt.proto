@@ -1,0 +1,117 @@
+syntax = "proto3";
+
+package proto.agent;
+
+import "proto/common/common.proto";
+
+option go_package = "card-game-client/proto/agent";
+
+// ==================== Agent 服务定义 ====================
+
+service AgentService {
+  // 玩家上线通知
+  rpc NotifyPlayerOnline(OnlineNotifyRequest) returns (common.CommonResponse);
+
+  // 玩家下线通知
+  rpc NotifyPlayerOffline(OfflineNotifyRequest) returns (common.CommonResponse);
+
+  // 转发业务消息
+  rpc ForwardMessage(ForwardMessageRequest) returns (ForwardMessageResponse);
+
+  // 查询玩家状态
+  rpc GetPlayerStatus(GetPlayerStatusRequest) returns (GetPlayerStatusResponse);
+
+  // 批量查询玩家状态
+  rpc BatchGetPlayerStatus(BatchGetPlayerStatusRequest) returns (BatchGetPlayerStatusResponse);
+
+  // 广播消息给所有在线玩家
+  rpc BroadcastMessage(BroadcastMessageRequest) returns (common.CommonResponse);
+
+  // 踢玩家下线（由 Agent 发起）
+  rpc KickPlayer(KickPlayerRequest) returns (common.CommonResponse);
+}
+
+// ==================== 请求/响应消息定义 ====================
+
+// 玩家上线通知请求
+message OnlineNotifyRequest {
+  int64 playerId = 1;
+  common.PlayerBaseInfo playerInfo = 2;
+  string gatewayId = 3;
+  string sessionId = 4;
+  int64 loginTime = 5;
+  string token = 6;
+}
+
+// 玩家下线通知请求
+message OfflineNotifyRequest {
+  string playerId = 1;
+  string reason = 2;          // logout, kick, timeout, error
+  int64 offlineTime = 3;
+}
+
+// 转发业务消息请求
+message ForwardMessageRequest {
+  string playerId = 1;
+  int32 msgId = 2;            // 业务消息ID
+  bytes body = 3;             // 消息体（Protobuf序列化）
+  int64 timestamp = 4;
+  int32 seqId = 5;
+}
+
+// 转发业务消息响应
+message ForwardMessageResponse {
+  common.Code code = 1;
+  string message = 2;
+  int32 msgId = 3;
+  bytes body = 4;             // 响应消息体
+  int64 timestamp = 5;
+}
+
+// 查询玩家状态请求
+message GetPlayerStatusRequest {
+  string playerId = 1;
+}
+
+// 查询玩家状态响应
+message GetPlayerStatusResponse {
+  common.Code code = 1;
+  string message = 2;
+  bool online = 3;                // 是否在线
+  common.PlayerSession session = 4;  // 会话详情（在线时有值）
+  int64 offlineTime = 5;          // 离线时间（离线时有值）
+}
+
+// 批量查询玩家状态请求
+message BatchGetPlayerStatusRequest {
+  repeated string playerIds = 1;
+}
+
+// 批量查询玩家状态响应
+message BatchGetPlayerStatusResponse {
+  common.Code code = 1;
+  string message = 2;
+  map<string, PlayerStatusItem> players = 3;
+}
+
+// 玩家状态项
+message PlayerStatusItem {
+  bool online = 1;
+  common.PlayerSession session = 2;
+  int64 offlineTime = 3;
+}
+
+// 广播消息请求
+message BroadcastMessageRequest {
+  int32 msgId = 1;            // 消息ID
+  bytes body = 2;             // 消息体
+  repeated string excludePlayerIds = 3;  // 排除的玩家ID列表
+  int32 targetStatus = 4;     // 目标状态：0-全部在线，1-战斗中，2-匹配中（0表示全部）
+}
+
+// 踢玩家下线请求（由Agent发起）
+message KickPlayerRequest {
+  string playerId = 1;
+  string reason = 2;
+  int32 kickCode = 3;
+}
