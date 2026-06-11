@@ -3,14 +3,13 @@ package client
 import (
 	"encoding/binary"
 	"errors"
-	"fmt"
 	"io"
 	"net"
-	"strconv"
 	"sync"
 	"time"
 
 	pb "card-game-client/proto/common"
+	"card-game-client/util"
 
 	"google.golang.org/protobuf/proto"
 )
@@ -24,8 +23,7 @@ type TCPClient struct {
 	conn        net.Conn
 	addr        string
 	mu          sync.Mutex
-	seqID       uint32
-	pendingReqs map[uint32]chan *pb.GameMessage
+	pendingReqs map[string]chan *pb.GameMessage
 	done        chan struct{}
 	onMessage   func(*pb.GameMessage)
 }
@@ -33,7 +31,7 @@ type TCPClient struct {
 func NewTCPClient(addr string) *TCPClient {
 	return &TCPClient{
 		addr:        addr,
-		pendingReqs: make(map[uint32]chan *pb.GameMessage),
+		pendingReqs: make(map[string]chan *pb.GameMessage),
 		done:        make(chan struct{}),
 	}
 }
@@ -92,19 +90,19 @@ func (c *TCPClient) Send(msg *pb.GameMessage) error {
 
 // 发送并等待响应
 func (c *TCPClient) SendAndWait(msg *pb.GameMessage, timeout time.Duration) (*pb.GameMessage, error) {
-	seq := c.nextSeqID()
+	seqID := util.GenerateUUID()
 	if msg.Header == nil {
 		msg.Header = &pb.MsgHeader{}
 	}
-	msg.Header.SeqId = fmt.Sprintf("%d", seq)
+	msg.Header.SeqId = seqID
 
 	ch := make(chan *pb.GameMessage, 1)
 	c.mu.Lock()
-	c.pendingReqs[seq] = ch
+	c.pendingReqs[seqID] = ch
 	c.mu.Unlock()
 	defer func() {
 		c.mu.Lock()
-		delete(c.pendingReqs, seq)
+		delete(c.pendingReqs, seqID)
 		c.mu.Unlock()
 	}()
 
@@ -120,13 +118,6 @@ func (c *TCPClient) SendAndWait(msg *pb.GameMessage, timeout time.Duration) (*pb
 	case <-c.done:
 		return nil, ErrClosed
 	}
-}
-
-func (c *TCPClient) nextSeqID() uint32 {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.seqID++
-	return c.seqID
 }
 
 // 读循环：解码消息并分发
@@ -158,13 +149,11 @@ func (c *TCPClient) readLoop() {
 
 		// 处理响应（如果有 SeqId）
 		if msg.Header != nil && msg.Header.SeqId != "" {
-			if seq, err := strconv.ParseUint(msg.Header.SeqId, 10, 32); err == nil {
-				c.mu.Lock()
-				if ch, ok := c.pendingReqs[uint32(seq)]; ok {
-					ch <- msg
-				}
-				c.mu.Unlock()
+			c.mu.Lock()
+			if ch, ok := c.pendingReqs[msg.Header.SeqId]; ok {
+				ch <- msg
 			}
+			c.mu.Unlock()
 		}
 
 		// 调用消息回调

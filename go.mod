@@ -2,6 +2,15 @@ module card-game-client
 
 go 1.26.1
 
-require google.golang.org/protobuf v1.32.0
+require (
+	github.com/google/uuid v1.6.0
+	google.golang.org/grpc v1.81.1
+	google.golang.org/protobuf v1.36.11
+)
 
-require github.com/google/go-cmp v0.5.9 // indirect
+require (
+	golang.org/x/net v0.56.0 // indirect
+	golang.org/x/sys v0.46.0 // indirect
+	golang.org/x/text v0.38.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260610212136-7ab31c22f7ad // indirect
+)

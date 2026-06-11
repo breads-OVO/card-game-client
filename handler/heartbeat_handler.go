@@ -5,6 +5,7 @@ import (
 
 	"card-game-client/client"
 	pb "card-game-client/proto/common"
+	"card-game-client/util"
 )
 
 type HeartbeatManager struct {
@@ -44,7 +45,7 @@ func (h *HeartbeatManager) Stop() {
 func (h *HeartbeatManager) sendHeartbeat() {
 	req := &pb.GameMessage{
 		Header: &pb.MsgHeader{
-			MsgId:     "1005", // MSG_HEARTBEAT_REQ
+			MsgId:     util.GenerateUUID(),
 			Timestamp: time.Now().UnixMilli(),
 		},
 		MessageType: pb.MessageType_HEARTBEAT,
