@@ -22,7 +22,7 @@ service LoginService {
   rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
 
   // 登出
-  rpc Logout(LogoutRequest) returns (common.CommonResponse);
+  rpc Logout(LogoutRequest) returns (LogoutResponse);
 
   // 踢下线（由其他服务调用）
   rpc KickPlayer(KickPlayerRequest) returns (common.CommonResponse);
@@ -98,8 +98,12 @@ message RefreshTokenResponse {
 // 登出请求
 message LogoutRequest {
   string playerId = 1;
-  string token = 2;
-  string reason = 3;          // logout-主动, kick-被踢, timeout-超时
+}
+
+// 登出响应
+message LogoutResponse {
+  common.Code code = 1;
+  string message = 2;
 }
 
 // 踢下线请求

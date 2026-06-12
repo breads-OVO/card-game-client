@@ -23,21 +23,13 @@ func main() {
 	}
 	fmt.Printf("Connected to server %s successfully\n", addr)
 
-	//loginHandler := handler.NewLoginHandler(cli)
-	//if err := loginHandler.Login(username, password); err != nil {
-	//	fmt.Printf("Login failed: %v\n", err)
-	//	cli.Close()
-	//	os.Exit(1)
-	//}
-	//fmt.Printf("Login success, playerId=%s\n", loginHandler.GetPlayerID())
-
 	hbManager := handler.NewHeartbeatManager(cli, 5*time.Second)
 	hbManager.Start()
 	fmt.Println("Heartbeat manager started (interval: 5s)")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-
+	AuthorManager := handler.NewAuthorManager(cli)
 	// 启动一个 goroutine 监听系统信号 (Ctrl+C)
 	go func() {
 		sigCh := make(chan os.Signal, 1)
@@ -64,7 +56,7 @@ func main() {
 			parts := strings.Fields(input)
 			cmd := parts[0]
 			// 分发命令
-			handleCommand(cmd, cli, cancel)
+			handleCommand(cmd, AuthorManager, cancel)
 		}
 	}()
 	printHelp()
@@ -75,17 +67,28 @@ func main() {
 }
 
 // handleCommand 处理用户输入的命令
-func handleCommand(cmd string, cli *client.TCPClient, cancel context.CancelFunc) {
-	AuthorManager := handler.NewAuthorManager(cli)
+func handleCommand(cmd string, authorManager *handler.AuthorManager, cancel context.CancelFunc) {
 
 	switch strings.ToLower(cmd) {
 	case "exit", "quit":
 		fmt.Println("Exiting...")
 		cancel() // 触发退出
 	case "register":
-		err := AuthorManager.Register()
+		err := authorManager.Register()
 		if err != nil {
 			fmt.Println("Register failed:", err)
+			return
+		}
+	case "login":
+		err := authorManager.Login()
+		if err != nil {
+			fmt.Println("Login failed:", err)
+			return
+		}
+	case "logout":
+		err := authorManager.Logout()
+		if err != nil {
+			fmt.Println("Logout failed:", err)
 			return
 		}
 

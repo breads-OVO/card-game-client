@@ -47,17 +47,16 @@ enum MessageType{
   //心跳
   HEARTBEAT = 1;
 
+  // ========== 通用消息 (0xxx) ==========
+  RESPONSE_CLIENT=2;                //响应给客户端
+
   // ========== Author服务 (10xx) ==========
   AUTH_REGISTER_REQUEST = 1001;      // 注册请求
-  AUTH_REGISTER_RESPONSE = 1002;     // 注册响应
-  AUTH_LOGIN_REQUEST = 1003;         // 登录请求
-  AUTH_LOGIN_RESPONSE = 1004;        // 登录响应
-  AUTH_VERIFY_TOKEN_REQUEST = 1005;  // Token校验请求
-  AUTH_VERIFY_TOKEN_RESPONSE = 1006; // Token校验响应
-  AUTH_REFRESH_TOKEN_REQUEST = 1007; // 刷新Token请求
-  AUTH_REFRESH_TOKEN_RESPONSE = 1008;// 刷新Token响应
-  AUTH_LOGOUT_REQUEST = 1009;        // 登出请求
-  AUTH_KICK_REQUEST = 1010;          // 踢下线请求
+  AUTH_LOGIN_REQUEST = 1002;         // 登录请求
+  AUTH_VERIFY_TOKEN_REQUEST = 1003;  // Token校验请求
+  AUTH_REFRESH_TOKEN_REQUEST = 1004; // 刷新Token请求
+  AUTH_LOGOUT_REQUEST = 1005;        // 登出请求
+  AUTH_KICK_REQUEST = 1006;          // 踢下线请求
 
   // ========== Agent 服务 (20xx) ==========
   AGENT_PLAYER_ONLINE_REQUEST = 2001;    // 玩家上线通知
@@ -71,18 +70,6 @@ enum MessageType{
   AGENT_BROADCAST_REQUEST = 2009;        // 广播消息
   AGENT_KICK_PLAYER_REQUEST = 2010;      // 踢玩家下线
 
-  // ========== Gateway 服务 (30xx) ==========
-  GATEWAY_CLIENT_CONNECT_REQUEST = 3001;     // 客户端连接
-  GATEWAY_CLIENT_CONNECT_RESPONSE = 3002;    // 客户端连接响应
-  GATEWAY_CLIENT_DISCONNECT_REQUEST = 3003;  // 客户端断开
-  GATEWAY_LOGIN_REQUEST = 3004;              // 网关登录请求
-  GATEWAY_LOGIN_RESPONSE = 3005;             // 网关登录响应
-  GATEWAY_HEARTBEAT_REQUEST = 3006;          // 心跳请求
-  GATEWAY_HEARTBEAT_RESPONSE = 3007;         // 心跳响应
-  GATEWAY_RECONNECT_REQUEST = 3008;          // 重连请求
-  GATEWAY_RECONNECT_RESPONSE = 3009;         // 重连响应
-  GATEWAY_BUSINESS_REQUEST = 3010;           // 业务请求
-  GATEWAY_BUSINESS_RESPONSE = 3011;          // 业务响应
 }
 
 /**
@@ -91,7 +78,6 @@ enum MessageType{
 message CommonResponse {
   Code code = 1;          // 响应码
   string message = 2;     // 响应消息
-  int64 timestamp = 3;    // 服务端时间戳
 }
 
 /**
